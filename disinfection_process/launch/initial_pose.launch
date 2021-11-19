@@ -1,0 +1,14 @@
+<!-- Este archivo lanza el planificador de trayectorias del brazo robótico
+y también inicia un nodo para indicar la posición inicial de las articulaciones -->
+
+<launch>
+
+    <!-- Se inicia el planificador de trayectorias del brazo -->
+    <include file="$(find my_kairos_moveit_config)/launch/rbkairos_planning_execution.launch">
+        <arg name="launch_rviz" value="false"/>
+	</include>
+
+    <!-- Se lanza el nodo que  -->
+    <node name="initial_arm_pose" pkg="disinfection_process" type="initial_arm_position.py" output="screen"/>
+
+</launch>

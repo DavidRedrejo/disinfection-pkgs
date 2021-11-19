@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<robot name="spray_tool" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:macro name="spray_tool" params="prefix parent *origin ">
+
+        <joint name="${prefix}_base_joint" type="fixed">
+            <!-- <insert_block name="origin"/> -->
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <parent link="${parent}"/>
+            <child link="${prefix}_base_link"/>
+        </joint>
+
+        <!-- BASE LINK -->
+        <link name="${prefix}_base_link">
+            <inertial>
+                <mass value="0.25" />
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+                <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0" />
+            </inertial>
+
+
+            <!-- atributo visual de la herramienta -->
+            <visual>
+                <origin xyz="0.01 -0.07 -0.07" rpy="1.57 -0 1.57" />
+                <geometry>
+                    <mesh filename="package://spray_tool_description/meshes/tool.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="gris">
+                    <color rgba="0.0 1 0.0 0.9"/>
+                </material>
+            </visual>
+
+            <!-- atributo visual para ver que forma tiene la colision -->
+            <visual>
+                <origin xyz="0.06 0 -0.05" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="0.06" length="0.32"/>
+                </geometry>
+                <material name="tpte">
+                    <color rgba="0.9 0.0 0.0 0.05"/>
+                </material>
+            </visual>
+
+            <!-- colision en forma de cilindro que abarca el spray -->
+            <collision>
+                <origin xyz="0.06 0 -0.05" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="0.06" length="0.32"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <joint name="${prefix}_end_joint" type="fixed">
+            <origin xyz="0.12 0.0 0.08" rpy="0.0 0.0 0.0"/>
+            <parent link="${prefix}_base_link"/>
+            <child link="${prefix}_end_link"/>
+        </joint>
+
+        <link name="${prefix}_end_link"/>
+
+
+        <gazebo reference="${prefix}_base_link">
+            <material>Gazebo/BlueTransparent</material>
+            <turnGravityOff>false</turnGravityOff>
+        </gazebo>
+
+    </xacro:macro>
+</robot>

@@ -1,0 +1,11 @@
+<launch>
+
+    <!--Planificador de MoveIt! para las trayectorias del brazo-->
+    <include file="$(find spray_moveit_config)/launch/rbkairos_planning_execution.launch">
+        <arg name="launch_rviz" value="false"/>
+	</include>
+
+    <!-- Se inicia el servidor del servicio encargado de mover el brazo -->
+    <node type="prueba_brazo_service_commander.py" name="arm_service_server_COMMANDER" pkg="disinfection_process"/>
+
+</launch>

@@ -1,0 +1,9 @@
+<launch>
+
+    <!-- Se incluye el servidor del servicio encargado de mover el brazo -->
+    <include file="$(find disinfection_process)/launch/spray_start_arm_service.launch"/>
+
+    <!-- Se inicia el nodo que ejecuta todo el proceso: leer datos, mover base y llamar al servicio del movimiento del brazo-->
+    <node type="start_disinfection_process.py" name="disinfection_process_node" pkg="disinfection_process"/>
+
+</launch>

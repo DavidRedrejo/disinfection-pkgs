@@ -1,0 +1,9 @@
+<launch>
+
+    <include file="$(find disinfection_process)/launch/start_arm_service.launch"/>
+    
+
+    <!-- We start the navigation rviz config-->
+    <node type="prueba_base.py" name="prueba_base" pkg="disinfection_process" output="screen"/>
+
+</launch>

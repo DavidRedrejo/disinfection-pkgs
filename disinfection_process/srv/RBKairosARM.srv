@@ -1,0 +1,9 @@
+# REQUEST
+string motion_code               # codigo (A, B, C, D, fold) segun el movimiento que se quiera hacer
+# float32[] object_coord          # coordenadas
+geometry_msgs/Point object_coord    # coordenadas del objeto
+float32 radius                  # radio con el que el brazo rodea al punto
+---
+# RESPONSE
+bool move_successful     # ejecucion exitosa?
+string message                  # mas info sobre el resultado

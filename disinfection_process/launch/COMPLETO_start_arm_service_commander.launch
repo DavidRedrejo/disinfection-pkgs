@@ -1,0 +1,12 @@
+<launch>
+
+    <!-- ACTIVAR e iniciar MoveIt para controlar brazo -->
+    <!-- <include file="$(find disinfection_process)/launch/COMPLETO_activar_brazo.launch"/> -->
+
+    <!-- Se inicia el servidor del servicio encargado de mover el brazo -->
+    <group ns="robot">
+        <node type="COMPLETO_prueba_brazo_service_commander.py" name="disinfection_arm_service_server" pkg="disinfection_process" output="screen"/>
+    </group>
+
+
+</launch>
