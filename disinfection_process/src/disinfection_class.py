@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 
-""" ESTE ES EL QUE TENEMOS QUE EJECUTAR PARA PROBAR LA LLAMADA AL SERVICIO DEL BRAZO"""
+""" CLASE DEL PROCESO DE DESINFECCION. CONTIENE LAS FUNCIONES
+    PARA REALIZAR TODOS LOS PASOS DEL PROCESO """
+
 import rospy
 import numpy as np
 import tf
@@ -26,13 +28,13 @@ import sys
 PI = np.pi
 
             
-class DisinfectionProcess(): # TODO: CAMBIAR NOMBRE O ALGO
+class DisinfectionProcess():
     def __init__(self, _coord, _gap, _radius):
-        rospy.logerr("   Entra en el constructor")
 
-        # Publishers para visualizar en RVIZ la posicion objetivo de la base
+        # Publisher para visualizar en RVIZ la posicion objetivo de la base
         self.pub_base_goal = rospy.Publisher('/disinfection/base_goal_pose', PoseStamped, queue_size=1)
 
+        # Cliente para mover la base con la navegacion autonoma
         self.move_base_client = actionlib.SimpleActionClient('/robot/move_base', MoveBaseAction)
         
         # CONEXION CON EL SERVICIO DEL BRAZO
@@ -55,23 +57,24 @@ class DisinfectionProcess(): # TODO: CAMBIAR NOMBRE O ALGO
         #self.start_process()
 
     def simple_go_to_point(self, coord=[0,5,0], ori=[0,0,PI/2]):
+        # Funcion para probar el movimiento a un unico punto
+
         self.pose.position = Point(*coord)
         quat_aux = tf.transformations.quaternion_from_euler(*ori)
         self.pose.orientation = Quaternion(*quat_aux)
 
         self.goal.target_pose.pose = self.pose
         self.goal.target_pose.header.frame_id = 'robot_map'
-        rospy.logerr("  TEST.   justo antes de mandar a la posicion")
         self.navigate_to_pose(self.goal, "C")
 
 
     def pose_callback(self, pose_msg):
-        self.robot_position = pose_msg.pose.pose # position and orientation
+        self.robot_position = pose_msg.pose.pose # posicion y orientacion
         rospy.logdebug("  in the pose_callback")
         # rospy.loginfo(self.robot_position)
 
 
-    def get_robot_position(self):   # FIXME:  tal vez tengamos que cambiar "position" por "location" o algo asi
+    def get_robot_position(self):
         rospy.logdebug("  in get_robot_position")
         sub_pose = rospy.Subscriber('/robot/amcl_pose', PoseWithCovarianceStamped, self.pose_callback)
 
@@ -79,6 +82,8 @@ class DisinfectionProcess(): # TODO: CAMBIAR NOMBRE O ALGO
 
 
     def approach_points(self, obj_coord, gap):
+        # Calculo de los puntos de aproximacion
+
         x_obj, y_obj = obj_coord[0:2] # se usan solo las coordenadas x e y
 
         self.approach_A = (x_obj + gap, y_obj)
@@ -87,14 +92,16 @@ class DisinfectionProcess(): # TODO: CAMBIAR NOMBRE O ALGO
         self.approach_D = (x_obj, y_obj - gap)
         
 
-    ## @brief Calcula el punto 
     def get_closer_approach_point(self):
-        self.get_robot_position()
+        # Calculo del punto de aproximacion mas cercano al robot
+
+        self.get_robot_position()   # obtiene la posicion actual del robot
 
         x_robot = self.robot_position.position.x
         y_robot = self.robot_position.position.y
         rospy.loginfo("X robot: %f, Y robot: %f", x_robot, y_robot)
 
+        # Calculo de la distancia euclidea
         dist_A = np.sqrt( (self.approach_A[0] - x_robot)**2 + (self.approach_A[1] - y_robot)**2 )
         dist_B = np.sqrt( (self.approach_B[0] - x_robot)**2 + (self.approach_B[1] - y_robot)**2 )
         dist_C = np.sqrt( (self.approach_C[0] - x_robot)**2 + (self.approach_C[1] - y_robot)**2 )
@@ -102,35 +109,34 @@ class DisinfectionProcess(): # TODO: CAMBIAR NOMBRE O ALGO
 
         rospy.loginfo("A: %f, B: %f, C: %f, D: %f", dist_A, dist_B, dist_C, dist_D)
 
+        # Creacion de la secuencia de puntos segun el mas cercano
         if dist_A == min(dist_A, dist_B, dist_C, dist_D):
             self.sequence = ["A", "B", "C", "D"]
-            #self.sequence = ["A", "C"]
             rospy.loginfo("Mejor aproximacion: punto A")
 
         elif dist_B == min(dist_A, dist_B, dist_C, dist_D):
             self.sequence = ["B", "C", "D", "A"]
-            #self.sequence = ["B", "D"]
             rospy.loginfo("Mejor aproximacion: punto B")
             
         elif dist_C == min(dist_A, dist_B, dist_C, dist_D):
             self.sequence = ["C", "D", "A", "B"]
-            #self.sequence = ["C", "A"]
             rospy.loginfo("Mejor aproximacion: punto C")
 
         elif dist_D == min(dist_A, dist_B, dist_C, dist_D):
             self.sequence = ["D", "A", "B", "C"]
-            #self.sequence = ["D", "B"]
             rospy.loginfo("Mejor aproximacion: punto D")
     
 
 
     def start_process(self):
+        # Comienza el proceso, siguiendo la secuencia calculada antes
         
-        offset = 0  # -PI/2
+        offset = 0  # offset para la orientacion de la posicion de la base
 
         ## Llamada al servicio del brazo para que se pliegue antes de comenzar la navegacion
         self.execute_move_arm("NAVIGATE")
 
+        # Recorrido de la secuencia de puntos
         for app_point in self.sequence:
             if app_point == "A":
                 self.pose.position.x = self.approach_A[0]
@@ -165,15 +171,14 @@ class DisinfectionProcess(): # TODO: CAMBIAR NOMBRE O ALGO
 
             self.navigate_to_pose(self.goal, app_point)
 
-    def execute_move_arm(self, motion_code):
-        # motion_code = NAVIGATE o el punto que tenga que hacer
-        rospy.logerr("  TEST.   dentro de EXECUTE_MOVE_ARM")
-        self.move_arm_request.motion_code = motion_code
-        #self.move_arm_request.motion_code = "C"
 
-        rospy.logerr("  TEST.   antes de llamar al cliente")
+    def execute_move_arm(self, motion_code):
+        # Ejecuta el movimiento del brazo indicado en 'motion_code' haciendo una llamada al servicio del brazo
+
+        self.move_arm_request.motion_code = motion_code
+
         move_arm_result = self.move_arm_client(self.move_arm_request)
-        rospy.logerr("  TEST.   despues de llamar al cliente")
+
         rospy.loginfo(move_arm_result.message)
 
         if not move_arm_result.move_successfull:
@@ -181,18 +186,10 @@ class DisinfectionProcess(): # TODO: CAMBIAR NOMBRE O ALGO
             return
 
     def navigate_to_pose(self, goal_pose, app_point):
+        # Ejecuta la navegacion autonoma a la posicion indicada en 'goal_pose'.
+        # 'app_point' es la letra del punto de aproximacion
 
-        self.pub_base_goal.publish(goal_pose.target_pose)
-
-        ## Llamada al servicio del brazo para que se pliegue
-        # self.move_arm_request.motion_code = "NAVIGATE"
-        # move_arm_result = self.move_arm_client(self.move_arm_request)
-        # rospy.loginfo(move_arm_result.message)
-
-        # if not move_arm_result.move_successfull:
-        #     rospy.logerr("  No se ha realizado el plegado del brazo correctamente. No se puede ir al siguiente punto.")
-        #     return
-        
+        self.pub_base_goal.publish(goal_pose.target_pose)   # se publica para visualizar en RVIZ el punto objetivo de la navegacion
 
         ## Navegacion hacia el punto indicado
         reached_goal = False
@@ -204,52 +201,28 @@ class DisinfectionProcess(): # TODO: CAMBIAR NOMBRE O ALGO
                 self.move_base_client.wait_for_result()
                 result = self.move_base_client.get_state()
 
-                rospy.logerr(result)
-
-
                 if result==3:
                     rospy.loginfo("  Punto %c alcanzado con exito!", app_point)
                     reached_goal = True
-                    #print('Punto', app_point, 'alcanzado con exito!')
-                    #break
                 rospy.sleep(2)
         
         ## Llamada al servicio del brazo para que haga el movimiento correspondiente al punto
         if not self._ctrl_c:
             rospy.logerr("  TEST.   justo antes de EXECUTE_MOVE_ARM")
             self.execute_move_arm(app_point)
-            # self.execute_move_arm("C")
-        # self.move_arm_request.motion_code = app_point
-        # move_arm_result = self.move_arm_client(self.move_arm_request)
-        # rospy.loginfo(move_arm_result.message)
-
-        # if not move_arm_result.move_successfull:
-        #     rospy.logerr("  No se ha realizado la trayectoria del brazo correctamente.")
-        
-
-    ## @brief Crea una instancia de la clase Point (geometry_msgs/Point) con las coordenadas indicadas.
-    ##
-    ## @param coord Coordenadas del objeto a desinfectar,
-    ## indicadas como una lista de la forma [x, y, z]
-    # def set_object_point(self, coord):
-
-    #     self.obj_point = Point(*coord)
 
 
     def shutdownhook(self):
-
         rospy.loginfo("shutdown time!")
         self._ctrl_c = True
-
         self.move_base_client.cancel_all_goals()
-        rospy.logerr("  parado!!")
         
     def callback(self, data):
         #print(data)
         return
 
 
-## MAIN DEL MOVE_BASE_CLASS
+## MAIN
 if __name__ == "__main__":
     rospy.init_node('prueba_base', log_level=rospy.DEBUG)
     move_obj = DisinfectionProcess([0.8, 0, 1.0], 0.85, 0.25)
@@ -257,20 +230,6 @@ if __name__ == "__main__":
     # para probar la navegacion a un unico punto
     # move_obj.simple_go_to_point([1,0,1.0], [0,0,0])
 
-
-    move_obj.execute_move_arm("mal")
-    rospy.sleep(1)
-    # para probar los 4 puntos
+    # para realizar los 4 puntos
     move_obj.start_process()
     
-    """ PRUEBA DE MOVIMIENTO DE BRAZO SOLO """
-    #move_obj.execute_move_arm("D")
-
-    """ PRUEBA DE NAVEGACION Y BRAZO x2 """
-    # move_obj.simple_go_to_point([0.5,0,1.0], [0,0,0]) # hace navegacion y luego el brazo C
-    #move_obj.execute_move_arm("C")
-
-    # move_obj.simple_go_to_point([1.4,0.0,1.0], [0,0,0]) # navegacion y brazo C
-    #move_obj.execute_move_arm("C")
-
-
