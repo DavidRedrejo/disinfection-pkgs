@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication
 
 import subprocess
 
-class ejemplo(QMainWindow):
+class Interfaz(QMainWindow):
 
     def __init__(self):
         super().__init__()
@@ -158,8 +158,6 @@ class ejemplo(QMainWindow):
         subprocess.check_call('./start_process.sh')
 
 
-        
-
 
 if __name__=='__main__':
 
@@ -168,6 +166,6 @@ if __name__=='__main__':
     data_file = "data.yaml"
 
     app = QApplication(sys.argv)
-    gui = ejemplo()
+    gui = Interfaz()
     gui.show()
     sys.exit(app.exec_())

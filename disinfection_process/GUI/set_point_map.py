@@ -4,14 +4,12 @@ import sys
 import cv2
 import yaml
 
-
 # Se inicializan las variables
 origen = [0, 0, 0]
 grid_size = 0
 height = 0
 width = 0
 channels = 0
-
 init_point = (0,0)
 clk_object_point = (0,0)
 init_point_map = (0,0)
@@ -26,7 +24,6 @@ file_map_yaml = "test_aula2.yaml"
 path_obj_point = "/home/david/robot_ws/src/disinfection_process/initial_data/"
 filename_obj_point = "map_object_point.txt"
 f = open(path_obj_point + filename_obj_point, "w")
-
 
 
 # Funcion que se ejecuta cuando se hace click sobre la imagen
@@ -59,33 +56,20 @@ def on_click(event, x, y, p1, p2):
         cv2.imshow("mapa", img)
 
 
-
-
-
-
-if __name__ == '__main__':
-    
-    
+if __name__ == '__main__':    
     try:
-
         # Se obtiene la informacion del yaml del mapa
-
         with open(path_map + file_map_yaml) as file:
-
             datos = yaml.safe_load(file)
 
             for item, doc in datos.items():
-
                 if item == 'origin':
                     origen = doc
-
                 if item == 'resolution':
                     grid_size = doc
-
                 if item == 'image':
                     path =  doc
 
-        print(path)
         img = cv2.imread(path)
         
         if img is None:
@@ -93,13 +77,13 @@ if __name__ == '__main__':
 
         height, width, channels = img.shape
 
-        # Se muestra el mapa y se indica el callback del click del raton.
+        # Se muestra el mapa y se indica el callback del click del raton
         cv2.namedWindow("mapa", cv2.WINDOW_NORMAL)
         cv2.setMouseCallback('mapa', on_click)
         cv2.imshow("mapa", img)
 
 
-        # Bucle hasta que el usuario presione ESPACIO para salir y escribir las coordenadas en el archivo.
+        # Bucle hasta que el usuario presione ESPACIO para salir y escribir las coordenadas en el archivo
         while(1):
             k = cv2.waitKey(33)
             if k==32:   # tacla ESPACIO
@@ -111,8 +95,6 @@ if __name__ == '__main__':
         
         cv2.destroyAllWindows()
         f.close()
-
         pass
-
     except:
         pass

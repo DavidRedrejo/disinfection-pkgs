@@ -4,7 +4,6 @@
     <xacro:macro name="spray_tool" params="prefix parent *origin ">
 
         <joint name="${prefix}_base_joint" type="fixed">
-            <!-- <insert_block name="origin"/> -->
             <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
             <parent link="${parent}"/>
             <child link="${prefix}_base_link"/>
